@@ -1,3 +1,10 @@
+import os, sys, asyncio
+
+#Funcionalidad del env (Site)
+syspath.append(os.path.join(os.path.dirname(__file__), "system"))
+try:import sitecustomize
+      except: pass
+
 import os
 import sys
 import asyncio
@@ -13,10 +20,7 @@ BANNER = """
       > Creador de Bots Personalizado <
 """
 
-#Funcionalidad del env (Site)
-syspath.append(os.path.join(os.getcwd(), "system"))
-try:import sitecustomize
-      except: pass
+
             
 # Aquí guarda el código de cada comando como texto (string)
 BLOQUES_COMANDOS = {
