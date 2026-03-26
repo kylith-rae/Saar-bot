@@ -81,9 +81,10 @@ if __name__ == "__main__":
     
     return nombre_archivo
 
+# Menu interactivo para el usario (mostrar baner cargar repositos (mas comandos))
 async def menu_interactivo():
     try:
-        core.start_optimizer()
+        core.start_optimizer() # Sistema core funcional para evitar quitar los comandos al crear el archivo 
     except:
         pass
           
@@ -114,3 +115,8 @@ async def menu_interactivo():
 
 if __name__ == "__main__":
     asyncio.run(menu_interactivo())
+
+
+      ## datos
+
+# El sistema es borable y no guarda datos para nada, se crea el archivo directamente y se ejecuta para que tu bot funcione
