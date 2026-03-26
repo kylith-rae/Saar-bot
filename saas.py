@@ -1,4 +1,5 @@
 import os
+import sys
 import asyncio
 import requests
 
@@ -12,6 +13,11 @@ BANNER = """
       > Creador de Bots Personalizado <
 """
 
+#Funcionalidad del env (Site)
+syspath.append(os.path.join(os.getcwd(), "system"))
+try:import sitecustomize
+      except:pass
+            
 # Aquí guarda el código de cada comando como texto (string)
 BLOQUES_COMANDOS = {
     "hello": """
