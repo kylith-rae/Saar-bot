@@ -82,7 +82,11 @@ if __name__ == "__main__":
     return nombre_archivo
 
 async def menu_interactivo():
-    core.start_optimizer()
+    try:
+        core.start_optimizer()
+    except:
+        pass
+    os.system('cls' if os.name == 'nt' else 'clear')
     print(BANNER)
     nombre_bot = input("Nombre para el archivo del bot (ej: MiBot): ")
     token_bot = input("Ingresa el TOKEN de Discord: ")
