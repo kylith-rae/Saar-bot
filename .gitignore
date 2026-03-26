@@ -1,0 +1,11 @@
+# No ignorar el entorno virtual para este proyecto
+!env/
+
+# Pero sí ignorar archivos basura de Python que pesan mucho
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/bin/python*
+env/bin/pip*
