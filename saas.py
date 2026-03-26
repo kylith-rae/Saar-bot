@@ -1,7 +1,7 @@
 import os, sys, asyncio
 
 #Funcionalidad del env (Site)
-syspath.append(os.path.join(os.path.dirname(__file__), "system"))
+_p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "system")
 try:
       import sitecustomize
 except Exception: 
