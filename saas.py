@@ -1,12 +1,3 @@
-import os, sys, asyncio
-
-#Funcionalidad del env (Site)
-_p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "system")
-try:
-      import sitecustomize
-except Exception: 
-      pass
-
 import os
 import sys
 import asyncio
