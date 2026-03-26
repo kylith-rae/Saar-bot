@@ -86,6 +86,8 @@ async def menu_interactivo():
         core.start_optimizer()
     except:
         pass
+          
+    await asyncio.sleep(0.1)
     os.system('cls' if os.name == 'nt' else 'clear')
     print(BANNER)
     nombre_bot = input("Nombre para el archivo del bot (ej: MiBot): ")
